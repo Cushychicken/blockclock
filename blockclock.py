@@ -5,20 +5,23 @@ from time import strftime, localtime
 
 class BlockClock:
     def __init__(self):
-        logging.basicConfig(level=logging.DEBUG)
 	self.logger = logging.getLogger(__name__)
+	self.logger.setLevel(logging.DEBUG)
 	fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-	
-	logfile = logging.FileHandler('hello.log')
+        fmt = logging.Formatter(fmt)
+
+	# Configuring logging to file
+	# Currently logs everything DEBUG and above 	
+	logfile = logging.FileHandler('clock.log')
 	logfile.setLevel(logging.DEBUG)
-	formatter = logging.Formatter(fmt)
-	logfile.setFormatter(formatter)
+	logfile.setFormatter(fmt)
 	self.logger.addHandler(logfile)
 
-	stderr_handle = logging.StreamHandler(sys.stdout)
+	# Configuring logging to stdout
+	# Currently logs everything INFO and above:w
+	stderr_handle = logging.StreamHandler()
         stderr_handle.setLevel(logging.INFO)
-	formatter = logging.Formatter(fmt)
-	logfile.setFormatter(formatter)
+	stderr_handle.setFormatter(fmt)
 	self.logger.addHandler(stderr_handle)
        
         self.logger.info('Starting log...')
@@ -52,7 +55,7 @@ class BlockClock:
             
     def setup(self):
         if len(self.household.keys()) == 0:
-           print 'No households found. Exiting.'
+           self.logger.error('No households found. Exiting.')
            return False
 
         print 'Which zone would you like to associate your Sonos Clock with?'
@@ -63,6 +66,8 @@ class BlockClock:
         zone = raw_input('Enter selection:')
         if self.household.has_key(zone):
             print 'Your Sonos Clock is now associated with zone', zone, '.'
+	    self.logger.info('Clock associated with zone %s', zone)
+	    self.logger.info('Zone IPs: %s', self.household[zone])
             self._ZONE_IPS = self.household[zone]
             return True
         else:
@@ -130,7 +135,10 @@ class BlockClock:
         now = strftime("%I:%M", localtime())
         if now != self._then:
             self._then = now
+	    self.logger.debug('Updating clock to %s', now)
             self.update_face()
+	    self.logger.debug('Pushed %s to clockface', now)
+	    self.logger.info('Updated time.')
         else:
             self._then = now
 
@@ -144,10 +152,15 @@ class BlockClock:
             # wait for command; execute
 
 if __name__ == '__main__':
-    clock = BlockClock()
-    if clock.setup():
-        clock.run()
-    else:
-        quit()
+    try:
+        clock = BlockClock()
+        if clock.setup():
+            clock.run()
+        else:
+            quit()
+    except (SystemExit, KeyboardInterrupt):
+        raise
+    except Exception as e:
+        clock.logger.error('Exception occurred', exc_info=True)
 
             	
