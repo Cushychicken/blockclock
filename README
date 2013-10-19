@@ -1,0 +1,4 @@
+This is a controller for a Sonos system based on a Raspberry Pi microcomputer. 
+The Python modules SoCo and SonosDiscovery are based on the original design 
+by Rahim Sonawalla. Raspberry Pi I2C driver and GPIO software based on original
+designs by Adafruit Industries. 
